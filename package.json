@@ -1,0 +1,24 @@
+{
+	"scripts": {
+		"start": "tsx src/index.ts"
+	},
+	"dependencies": {
+		"@jellyfin/sdk": "^0.10.0",
+		"@xhayper/discord-rpc": "^1.2.0",
+		"bad-words": "^3.0.4",
+		"dotenv": "^16.4.5",
+		"easy-presence": "^1.2.0-oops1",
+		"leo-profanity": "^1.7.0",
+		"profane-words": "^1.5.11",
+		"ws": "^8.18.0"
+	},
+	"devDependencies": {
+		"@types/bad-words": "^3.0.3",
+		"@types/leo-profanity": "^1.5.4",
+		"@types/node": "^22.1.0",
+		"@types/ws": "^8.5.12",
+		"ts-node": "^10.9.2",
+		"tsx": "^4.16.5",
+		"typescript": "^5.5.4"
+	}
+}
