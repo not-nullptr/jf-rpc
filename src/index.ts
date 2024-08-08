@@ -16,6 +16,8 @@ import {
 } from "@jellyfin/sdk/lib/generated-client/models";
 import Filter from "bad-words";
 
+const JELLYFIN_URL = process.env.JF_URL || "http://127.0.0.1:8096";
+
 const cleanText = (text: string) => {
 	const filter = new Filter({
 		// the regex should match literally all characters, except the first and last character
@@ -36,7 +38,7 @@ const jellyfin = new Jellyfin({
 	},
 });
 
-const api = jellyfin.createApi("http://127.0.0.1:8096");
+const api = jellyfin.createApi(JELLYFIN_URL);
 api.accessToken = process.env.JF_ACCESS_TOKEN!;
 
 const systemApi = getSystemApi(api);
@@ -114,14 +116,11 @@ const renderPlaybar = (start: Date, end: Date, playedMs: number) => {
 
 	// the above but with the bug fixed where at minute turnover it shows 0:60 instead of 1:00
 	return seconds === "60"
-		? `${
-				minutes + 1
-		  }:00 ${playedBarString}${scrubber}${unplayedBarString} ${totalMinutes}:00`
-		: `${minutes}:${
-				+seconds < 10 ? "0" : ""
-		  }${seconds} ${playedBarString}${scrubber}${unplayedBarString} ${totalMinutes}:${
-				+totalSeconds < 10 ? "0" : ""
-		  }${totalSeconds}`;
+		? `${minutes + 1
+		}:00 ${playedBarString}${scrubber}${unplayedBarString} ${totalMinutes}:00`
+		: `${minutes}:${+seconds < 10 ? "0" : ""
+		}${seconds} ${playedBarString}${scrubber}${unplayedBarString} ${totalMinutes}:${+totalSeconds < 10 ? "0" : ""
+		}${totalSeconds}`;
 };
 
 const renderLargeText = (playbar: string, lyric: string) => {
@@ -149,11 +148,11 @@ client.on("ready", () => {
 				// converting ticks to seconds is n / 10000000
 				endTime = new Date(
 					startTime.getTime() +
-						(session.NowPlayingItem?.RunTimeTicks || 0) / 10000
+					(session.NowPlayingItem?.RunTimeTicks || 0) / 10000
 				);
 				if (session.NowPlayingItem?.ParentId) {
 					album = await fetch(
-						`http://127.0.0.1:8096/Users/${process.env.JF_USER_ID}/Items/${session.NowPlayingItem.ParentId}`,
+						`${JELLYFIN_URL}/Users/${process.env.JF_USER_ID}/Items/${session.NowPlayingItem.ParentId}`,
 						{
 							headers: {
 								Authorization: `MediaBrowser Token=${api.accessToken}`,
@@ -163,7 +162,7 @@ client.on("ready", () => {
 				}
 
 				if (album && album.ArtistItems?.[0]?.Id) {
-					artistUrl = `https://jf.nota-robot.com/Items/${album.ArtistItems?.[0]?.Id}/Images/Primary?fillHeight=96&fillWidth=96&quality=100`;
+					artistUrl = `${JELLYFIN_URL}/Items/${album.ArtistItems?.[0]?.Id}/Images/Primary?fillHeight=96&fillWidth=96&quality=100`;
 				}
 				if (session.NowPlayingItem?.Id) {
 					lyrics = (
@@ -176,32 +175,30 @@ client.on("ready", () => {
 
 			currentSongId = session.NowPlayingItem?.Id || "";
 			client.user?.setActivity({
-				details: `${
-					session.NowPlayingItem?.Artists?.map((a) => a).join(", ") ||
+				details: `${session.NowPlayingItem?.Artists?.map((a) => a).join(", ") ||
 					"Unknown"
-				} - ${session.NowPlayingItem?.Name || "Unknown"}`,
+					} - ${session.NowPlayingItem?.Name || "Unknown"}`,
 				state: session.NowPlayingItem?.Album || "Unknown",
-				largeImageKey: `https://jf.nota-robot.com/Items/${session.NowPlayingItem?.ParentId}/Images/Primary?fillHeight=96&fillWidth=96&quality=100`,
+				largeImageKey: `${JELLYFIN_URL}/Items/${session.NowPlayingItem?.ParentId}/Images/Primary?fillHeight=96&fillWidth=96&quality=100`,
 				largeImageText:
 					// get time left in mm:ss format
 					startTime && endTime
 						? `${renderLargeText(
-								renderPlaybar(
-									startTime,
-									endTime,
-									(session.PlayState?.PositionTicks || 1) /
-										10000
-								),
-								getCurrentLyric(
-									lyrics,
-									session.PlayState?.PositionTicks || 1
-								)
-						  )}`
+							renderPlaybar(
+								startTime,
+								endTime,
+								(session.PlayState?.PositionTicks || 1) /
+								10000
+							),
+							getCurrentLyric(
+								lyrics,
+								session.PlayState?.PositionTicks || 1
+							)
+						)}`
 						: "",
 				smallImageKey: artistUrl,
-				smallImageText: `${
-					album?.Artists?.[0] || "Unknown Artist"
-				} - jf-rpc written by nullptr`,
+				smallImageText: `${album?.Artists?.[0] || "Unknown Artist"
+					} - jf-rpc written by nullptr`,
 				instance: false,
 				type: ActivityType.Listening,
 			});
